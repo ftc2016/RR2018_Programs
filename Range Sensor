@@ -1,0 +1,119 @@
+package org.firstinspires.ftc.teamcode;
+
+/**
+ * Created by Max on 1/14/2018.
+ */
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.I2cAddr;
+import com.qualcomm.robotcore.hardware.I2cDevice;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynchImpl;
+import com.qualcomm.robotcore.hardware.Servo;
+
+// i set it up as an teleop
+@TeleOp(name = "RangeSensor ftc 2018")
+public class Range_sensor extends OpMode {
+
+    byte[] range1Cache; //all bytes in range below.
+
+    I2cAddr RANGE1ADDRESS = new I2cAddr(0x14);
+    public static final int RANGE1_REG_START = 0x04; // good number to starrt testing on.
+    public static final int RANGE1_READ_LENGTH = 2; // number to read per byte.
+
+    public I2cDevice RANGE1;
+    public I2cDeviceSynch RANGE1Reader;
+    Servo jewel_vertical;
+    DcMotor motor_right;
+    DcMotor motor_left;
+    DcMotor motor_backleft;
+    DcMotor motor_backright;
+    Servo servo_leftarm;
+    Servo servo_rightarm;
+    Servo servo_middleservo;
+
+    //intializing randge reader we can double it if needed - but for now im trying to get one working
+    @Override
+    public void init() {
+        // here i am initializing
+        jewel_vertical = hardwareMap.servo.get("jewel_vertical");
+        // here i am initializing
+        servo_leftarm = hardwareMap.servo.get("left_glyph");
+        // here i am initializing
+        servo_rightarm = hardwareMap.servo.get("right_glyph");
+        // here i am initializing
+        servo_middleservo = hardwareMap.servo.get("lift_glyph");
+        // here i am initializing
+        motor_left = hardwareMap.dcMotor.get("left_drive");
+        // here i am initializing
+        motor_backleft = hardwareMap.dcMotor.get("left_back_drive");
+        // here i am initializing
+        motor_backright = hardwareMap.dcMotor.get("right_back_drive");
+        // here i am initializing
+        motor_right = hardwareMap.dcMotor.get("right_drive");
+        // here i am initializing
+        motor_left.setDirection(DcMotorSimple.Direction.REVERSE);
+        // here i am initializing
+        motor_backleft.setDirection(DcMotorSimple.Direction.REVERSE);
+        // here i am initializing
+        RANGE1 = hardwareMap.i2cDevice.get("range_device");
+        // here i am initializing
+        RANGE1Reader = new I2cDeviceSynchImpl(RANGE1, RANGE1ADDRESS, false);
+        RANGE1Reader.engage();
+        // here i am initializing
+    }
+
+    @Override
+    public void loop() {
+        range1Cache = RANGE1Reader.read(RANGE1_REG_START, RANGE1_READ_LENGTH);
+
+        telemetry.addData("Ultra Sonic", range1Cache[0] & 0xFF);
+        telemetry.addData("ODS", range1Cache[1] & 0xFF);
+        // do not edit these range cache array values as they are assignened and needed
+        telemetry.update();
+        double ultrasonic = range1Cache[0] & 0xFF;
+        double opticalus = range1Cache[1] & 0xFF;
+        // if the ultrasonic sensor is within 15 something it wont proceed to move, it will stop the motors
+        //also if the opticial part of the ultra sonic is less than 1
+        if (ultrasonic >= 15 && opticalus > 1 ){
+            stopallmotors();
+            telemetry.update();
+        }else {
+            movefoward();
+            telemetry.update();
+            //however if the ultrasonic sensor is not >= 15 it will move forward untill it is.
+        }
+    }
+
+
+
+    @Override
+    public void stop() {
+
+    }
+
+    public void movefoward() {
+        motor_backleft.setPower(0.43);
+
+        motor_left.setPower(0.43);
+
+        motor_right.setPower(0.43);
+
+        motor_backright.setPower(0.43);
+
+    }
+
+    public void stopallmotors() {
+        motor_backleft.setPower(0);
+
+        motor_left.setPower(0);
+
+        motor_right.setPower(0);
+
+        motor_backright.setPower(0);
+
+    }
+}
